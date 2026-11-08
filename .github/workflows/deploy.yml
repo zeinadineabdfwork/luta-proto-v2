@@ -1,0 +1,49 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: luta-proto/luta-proto-v2
+      - run: npm run build
+        working-directory: luta-proto/luta-proto-v2
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p _site
+          cp -r luta-proto/luta-proto-v2/index.html \
+            luta-proto/luta-proto-v2/dist \
+            luta-proto/luta-proto-v2/assets \
+            luta-proto/luta-proto-v2/cenarios \
+            _site/
+          mkdir -p _site/node_modules/three/examples
+          cp -r luta-proto/luta-proto-v2/node_modules/three/build \
+            _site/node_modules/three/build
+          cp -r luta-proto/luta-proto-v2/node_modules/three/examples/jsm \
+            _site/node_modules/three/examples/jsm
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    steps:
+      - id: d
+        uses: actions/deploy-pages@v4
