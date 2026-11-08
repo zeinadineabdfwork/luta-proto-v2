@@ -1,0 +1,23 @@
+{
+  "name": "luta-mocambique-proto",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "tsc && node --test dist/tests/combat.test.js",
+    "start": "tsc && node scripts/serve.mjs",
+    "build:assets": "node scripts/build-characters.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "meshoptimizer": "^1.3.0",
+    "sharp": "^0.35.5",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "@types/three": "^0.170.0",
+    "three": "^0.170.0"
+  }
+}

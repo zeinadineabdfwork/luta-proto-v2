@@ -1,0 +1,59 @@
+{
+  "id": "nelton",
+  "name": "Nelton",
+  "heightCm": 175,
+  "scale": 175,
+  "clips": {
+    "idle": {
+      "duration": 3.3,
+      "source": "Fighting Idle.fbx"
+    },
+    "walk": {
+      "duration": 0.8333,
+      "source": "Happy Walk.fbx",
+      "authoredSpeedCmS": 194.3
+    },
+    "walkBack": {
+      "duration": 0.8667,
+      "source": "Happy Walk Backward.fbx",
+      "authoredSpeedCmS": -122.1
+    },
+    "jump": {
+      "duration": 2.1667,
+      "source": "Jump.fbx",
+      "takeoff": 0.933,
+      "landing": 1.183
+    },
+    "punch": {
+      "duration": 2,
+      "source": "Hook.fbx",
+      "tip": "mixamorigLeftHand",
+      "tStart": 0.087,
+      "tImpact": 0.483,
+      "tEnd": 0.7,
+      "reachCm": 60.2,
+      "impactHeightCm": 121.4
+    },
+    "kick": {
+      "duration": 1.5,
+      "source": "Mma Kick.fbx",
+      "tip": "mixamorigRightFoot",
+      "tStart": 0.187,
+      "tImpact": 0.6,
+      "tEnd": 0.867,
+      "reachCm": 79.3,
+      "impactHeightCm": 56.5
+    },
+    "hit": {
+      "duration": 1,
+      "source": "Rib Hit.fbx"
+    }
+  },
+  "forward": [
+    0.016885685511178593,
+    0,
+    0.9998574266488286
+  ],
+  "groundOffsetCm": 0.35,
+  "idleHeightCm": 175.3
+}

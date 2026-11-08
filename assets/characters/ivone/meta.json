@@ -1,0 +1,59 @@
+{
+  "id": "ivone",
+  "name": "Dona Ivone",
+  "heightCm": 165,
+  "scale": 96.4158449567368,
+  "clips": {
+    "idle": {
+      "duration": 5,
+      "source": "Mma Idle.fbx"
+    },
+    "walk": {
+      "duration": 2.6333,
+      "source": "Female Tough Walk.fbx",
+      "authoredSpeedCmS": 73.7
+    },
+    "walkBack": {
+      "duration": 0.9667,
+      "source": "Walking Backwards.fbx",
+      "authoredSpeedCmS": -86.9
+    },
+    "jump": {
+      "duration": 2.1667,
+      "source": "Jump.fbx",
+      "takeoff": 0.933,
+      "landing": 1.167
+    },
+    "punch": {
+      "duration": 2.0333,
+      "source": "Illegal Elbow Punch.fbx",
+      "tip": "mixamorigLeftHand",
+      "tStart": 0.02,
+      "tImpact": 0.4,
+      "tEnd": 0.567,
+      "reachCm": 43.6,
+      "impactHeightCm": 116.8
+    },
+    "kick": {
+      "duration": 2.6,
+      "source": "Kicking.fbx",
+      "tip": "mixamorigRightFoot",
+      "tStart": 0.887,
+      "tImpact": 1.35,
+      "tEnd": 1.883,
+      "reachCm": 62.1,
+      "impactHeightCm": 100.7
+    },
+    "hit": {
+      "duration": 2.1333,
+      "source": "Stunned.fbx"
+    }
+  },
+  "forward": [
+    0.10998063814952527,
+    0,
+    0.993933729799036
+  ],
+  "groundOffsetCm": -0.04,
+  "idleHeightCm": 153.5
+}

@@ -1,0 +1,40 @@
+{
+  "nelton": {
+    "name": "Nelton",
+    "heightCm": 175,
+    "dir": "character/nelton",
+    "diffuse": "young_man_3d_model_basecolor.JPEG",
+    "normal": "young_man_3d_model_normal.JPEG",
+    "meshFrom": "Fighting Idle.fbx",
+    "targetTris": 60000,
+    "clips": {
+      "idle": "Fighting Idle.fbx",
+      "walk": "Happy Walk.fbx",
+      "walkBack": "Happy Walk Backward.fbx",
+      "jump": "Jump.fbx",
+      "punch": "Hook.fbx",
+      "kick": "Mma Kick.fbx",
+      "hit": "Rib Hit.fbx"
+    },
+    "tips": { "punch": ["mixamorigRightHand", "mixamorigLeftHand"], "kick": ["mixamorigRightFoot", "mixamorigLeftFoot"] }
+  },
+  "ivone": {
+    "name": "Dona Ivone",
+    "heightCm": 165,
+    "dir": "character/dona-ivone",
+    "diffuse": "texture_diffuse.png",
+    "normal": "texture_normal.png",
+    "meshFrom": "Mma Idle.fbx",
+    "targetTris": 70000,
+    "clips": {
+      "idle": "Mma Idle.fbx",
+      "walk": "Female Tough Walk.fbx",
+      "walkBack": "Walking Backwards.fbx",
+      "jump": "Jump.fbx",
+      "punch": "Illegal Elbow Punch.fbx",
+      "kick": "Kicking.fbx",
+      "hit": "Stunned.fbx"
+    },
+    "tips": { "punch": ["mixamorigRightHand", "mixamorigLeftHand", "mixamorigRightForeArm", "mixamorigLeftForeArm"], "kick": ["mixamorigRightFoot", "mixamorigLeftFoot"] }
+  }
+}
