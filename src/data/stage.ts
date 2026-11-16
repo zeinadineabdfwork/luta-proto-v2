@@ -13,7 +13,7 @@ export const STAGE_WIDTH_CM = STAGE_IMG_W * CM_PER_PX;     // ~2307 cm
 export const STAGE_HALF = STAGE_WIDTH_CM / 2;
 
 // Câmera ortográfica (altura visível em cm). Largura = altura * 16/9.
-export const VIEW_H = 500;
+export const VIEW_H = 470;
 export const VIEW_W = VIEW_H * 16 / 9;
 export const FEET_FROM_BOTTOM = 100;           // quanto do chão aparece abaixo dos pés
 export const CAM_Y = -FEET_FROM_BOTTOM + VIEW_H / 2;
