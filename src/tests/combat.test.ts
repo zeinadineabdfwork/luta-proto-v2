@@ -124,3 +124,27 @@ test('abertura (intro) bloqueia entradas até começar a luta', () => {
   idle(m, 40);
   assert.equal(m.phase, 'fight');
 });
+
+test('bola de fogo do Nelton: nasce na mão, viaja, acerta de longe e só existe uma por vez', () => {
+  const SP: InputState = { ...EMPTY_INPUT, special: true };
+  const m = new Match(new Fighter(NELTON, -250, 1), new Fighter(IVONE, 250, -1));
+  m.step(SP, EMPTY_INPUT);
+  assert.equal(m.p1.state, 'attack'); assert.equal(m.p1.move, 'special');
+  assert.equal(m.projectiles.length, 0, 'ainda carregando');
+  for (let i = 0; i < NELTON.moves.special!.startup; i++) m.step(EMPTY_INPUT, EMPTY_INPUT);
+  assert.equal(m.projectiles.length, 1);
+  // segundo especial enquanto a bola existe é ignorado
+  for (let i = 0; i < 40; i++) m.step(i === 0 ? SP : EMPTY_INPUT, EMPTY_INPUT);
+  assert.ok(m.projectiles.length <= 1);
+  for (let i = 0; i < 60 && m.p2.health === 1000; i++) m.step(EMPTY_INPUT, EMPTY_INPUT);
+  assert.equal(m.p2.health, 1000 - NELTON.moves.special!.damage);
+  assert.equal(m.projectiles.length, 0, 'a bola some ao acertar');
+  assert.ok(m.blasts.some((b) => b.kind === 'impact'));
+  assert.equal(m.p2.state, 'hitstun');
+});
+
+test('Dona Ivone não tem especial: o botão não faz nada', () => {
+  const m = new Match(new Fighter(IVONE, -100, 1), new Fighter(NELTON, 100, -1));
+  m.step({ ...EMPTY_INPUT, special: true }, EMPTY_INPUT);
+  assert.equal(m.p1.state, 'idle');
+});

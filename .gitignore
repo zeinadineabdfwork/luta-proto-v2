@@ -1,8 +1,4 @@
-**/node_modules/
-**/dist/
-**/_site/
-.env
-.env.*
-!.env.example
-npm-debug.log*
-.DS_Store
+node_modules/
+dist/
+character/
+_site/

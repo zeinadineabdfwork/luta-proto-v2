@@ -18,8 +18,11 @@ export class Fighter {
   frame = 0;
   hitstunTotal = 0;
   hasHit = false;
+  fireballOut = false;   // a Match avisa se já há um projétil dele em cena (só um por vez)
+  pendingProjectile = false;
   private prevPunch = false;
   private prevKick = false;
+  private prevSpecial = false;
 
   constructor(readonly data: FighterData, private startX: number, private startFacing: 1 | -1) {
     this.x = startX;
@@ -31,12 +34,13 @@ export class Fighter {
     this.x = this.startX; this.y = 0; this.vy = 0; this.vx = 0; this.kb = 0;
     this.facing = this.startFacing; this.health = this.data.maxHealth;
     this.state = 'idle'; this.move = null; this.walkDir = 0; this.frame = 0; this.hitstunTotal = 0;
-    this.hasHit = false; this.prevPunch = false; this.prevKick = false;
+    this.hasHit = false; this.prevPunch = false; this.prevKick = false; this.prevSpecial = false;
+    this.fireballOut = false; this.pendingProjectile = false;
   }
 
   get grounded(): boolean { return this.y <= 0; }
   get actionable(): boolean { return this.state === 'idle' || this.state === 'walk'; }
-  get attack(): AttackData | null { return this.move ? this.data.moves[this.move] : null; }
+  get attack(): AttackData | null { return (this.move ? this.data.moves[this.move] : null) ?? null; }
   /** Quanto tempo (frames) dura o salto no ar, calculado pela física. */
   get airFrames(): number { return (2 * this.data.jumpVelocity) / this.data.gravity; }
   /** Frames desde que saiu do chão (0 durante a agachada). */
@@ -56,6 +60,7 @@ export class Fighter {
   update(input: InputState, opponentX: number): void {
     const punchP = input.punch && !this.prevPunch; this.prevPunch = input.punch;
     const kickP = input.kick && !this.prevKick; this.prevKick = input.kick;
+    const specialP = input.special && !this.prevSpecial; this.prevSpecial = input.special;
 
     switch (this.state) {
       case 'ko':
@@ -70,6 +75,7 @@ export class Fighter {
       case 'attack': {
         const a = this.attack!;
         this.frame++;
+        if (this.move === 'special' && this.frame === a.startup) this.pendingProjectile = true;
         if (this.frame >= a.startup + a.active + a.recovery) { this.move = null; this.setState('idle'); }
         break;
       }
@@ -85,6 +91,10 @@ export class Fighter {
       default: { // idle | walk
         this.facing = opponentX >= this.x ? 1 : -1;
         this.walkDir = 0;
+        if (specialP && this.data.moves.special && !this.fireballOut) {
+          this.move = 'special'; this.hasHit = false; this.setState('attack');
+          return;
+        }
         if (kickP || punchP) {
           this.move = kickP ? 'kick' : 'punch';
           this.hasHit = false;
@@ -121,7 +131,7 @@ export class Fighter {
 
   takeHit(a: AttackData, attackerFacing: 1 | -1): void {
     this.health = Math.max(0, this.health - a.damage);
-    this.hasHit = false; this.move = null;
+    this.hasHit = false; this.move = null; this.pendingProjectile = false;
     this.kb = a.knockback * attackerFacing;
     this.hitstunTotal = a.hitstun;
     if (this.health <= 0) { this.kb *= 1.8; this.setState('ko'); return; }
@@ -137,6 +147,6 @@ export class Fighter {
 
   hitbox(): Rect | null {
     const a = this.attack;
-    return a && this.attackPhase === 'active' ? this.toWorld(a.hitbox) : null;
+    return a && !a.projectile && this.attackPhase === 'active' ? this.toWorld(a.hitbox) : null;
   }
 }

@@ -12,6 +12,12 @@ export const NELTON: FighterData = {
   moves: {
     punch: { startup: 8, active: 3, recovery: 16, damage: 55, hitstun: 17, knockback: 3.5, hitbox: { x: 10, y: 108, w: 66, h: 32 } },
     kick:  { startup: 12, active: 4, recovery: 22, damage: 85, hitstun: 22, knockback: 6, hitbox: { x: 18, y: 38, w: 80, h: 38 } },
+    // Hadouken de fogo: o golpe em si não tem hitbox, o dano vem da bola de fogo (só uma em cena por vez).
+    special: {
+      startup: 20, active: 2, recovery: 26, damage: 95, hitstun: 26, knockback: 7,
+      hitbox: { x: 0, y: 0, w: 0, h: 0 },
+      projectile: { speed: 9, spawn: { x: 62, y: 122 }, w: 46, h: 40, life: 140 },
+    },
   },
 };
 

@@ -5,6 +5,7 @@ import {
   CAM_Y, CM_PER_PX, FEET_PX, STAGE_IMAGE, STAGE_IMG_H, STAGE_IMG_W, VIEW_H, VIEW_W,
 } from '../data/stage.js';
 import { CharacterView } from './character-view.js';
+import { FxLayer } from './fx.js';
 import { Hud, HUD_H, HUD_W } from './hud.js';
 
 /** Cena 3D (cenário 2D como plano + lutadores 3D) com câmera ortográfica lateral que acompanha os lutadores. */
@@ -15,6 +16,8 @@ export class Renderer {
   private views: CharacterView[] = [];
   private shadows: THREE.Mesh[] = [];
   private hud: Hud;
+  private fx: FxLayer;
+  private fighters: Fighter[] = [];
   private last = performance.now();
 
   constructor(private canvas: HTMLCanvasElement, hudCanvas: HTMLCanvasElement) {
@@ -23,6 +26,7 @@ export class Renderer {
     this.gl.toneMapping = THREE.NoToneMapping;
     this.camera = new THREE.OrthographicCamera(-VIEW_W / 2, VIEW_W / 2, VIEW_H / 2, -VIEW_H / 2, 1, 5000);
     this.camera.position.set(0, CAM_Y, 1500);
+    this.fx = new FxLayer(this.scene);
     this.hud = new Hud(hudCanvas.getContext('2d')!);
     this.hudCanvas = hudCanvas;
     this.setupLights();
@@ -51,6 +55,9 @@ export class Renderer {
   }
 
   async load(fighters: Fighter[], onProgress: (msg: string) => void): Promise<void> {
+    this.fighters = fighters;
+    onProgress('Carregando efeitos…');
+    await this.fx.load();
     onProgress('Carregando cenário…');
     const tex = await new THREE.TextureLoader().loadAsync(STAGE_IMAGE);
     tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = this.gl.capabilities.getMaxAnisotropy();
@@ -87,6 +94,8 @@ export class Renderer {
       const k = Math.max(0.35, 1 - f.y / 220);
       sh.scale.set(k, k, 1); (sh.material as THREE.MeshBasicMaterial).opacity = 0.9 * k;
     });
+
+    this.fx.update(m, this.fighters, vdt);
 
     const sx = m.shake > 0.3 ? (Math.random() - 0.5) * m.shake : 0, sy = m.shake > 0.3 ? (Math.random() - 0.5) * m.shake * 0.7 : 0;
     this.camera.position.x = m.camX + sx; this.camera.position.y = CAM_Y + sy;

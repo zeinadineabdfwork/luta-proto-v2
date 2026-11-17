@@ -13,6 +13,7 @@ npm run build:assets   # (opcional) regenera assets/ a partir de character/*.fbx
 | Pular | W | ↑ |
 | Soco | J | Num1 ou / |
 | Chute | K | Num2 ou . |
+| Bola de fogo (só Nelton) | L | Num3 ou , |
 Controle: D-pad/analógico, A/X = soco, B/Y = chute. F1 = debug (hurtbox verde, hitbox vermelha).
 
 ## O que há de novo
@@ -24,3 +25,6 @@ Controle: D-pad/analógico, A/X = soco, B/Y = chute. F1 = debug (hurtbox verde, 
 
 ## Observação importante
 Os arquivos não têm animação de morte. O K.O. usa a reação a golpe + queda procedural. Para usar uma animação real, adicione o FBX em `scripts/characters.config.json` e rode `npm run build:assets`.
+
+## Efeitos de fogo
+Bola de fogo do Nelton: carga na mão, projétil que atravessa a tela (só uma por vez) e explosão no impacto. Efeitos em `assets/fx/` (atlas WebP feitos a partir dos pacotes Fantasy VFX Fire Magic e Ember Flipbooks Lite; verifique as licenças antes de publicar os arquivos num repositório público).

@@ -63,11 +63,11 @@ export class CharacterView {
     const m = this.meta.clips;
     switch (f.state) {
       case 'attack': {
-        const mv = f.move!, a = f.attack!, c = m[mv];
+        const mv = f.move!, a = f.attack!, clipName = mv === 'special' ? 'punch' : mv, c = m[clipName];
         const ts = c.tStart!, ti = c.tImpact!, te = c.tEnd!;
         const peak = a.startup + a.active / 2;
         const t = f.frame < peak ? lerp(ts, ti, f.frame / peak) : lerp(ti, te, (f.frame - peak) / (a.active / 2 + a.recovery));
-        return { clip: mv, t, fade: 0.05 };
+        return { clip: clipName, t, fade: 0.05 };
       }
       case 'jump': {
         const c = m.jump, sq = f.data.jumpSquat;
