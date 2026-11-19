@@ -13,6 +13,7 @@ import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import * as BGU from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { MeshoptSimplifier } from 'meshoptimizer';
 import sharp from 'sharp';
+import { loadLandmarks, smoothLandmarks, normalizeHeading, retargetClip, strikeEvents } from './lib/retarget.mjs';
 
 globalThis.FileReader = class {
   readAsArrayBuffer(blob) { blob.arrayBuffer().then((b) => { this.result = b; this.onloadend?.({ target: this }); }); }
@@ -167,6 +168,30 @@ for (const [id, cfg] of Object.entries(cfgAll)) {
     }
     clips[ci] = new THREE.AnimationClip(clip.name, clip.duration, clip.tracks.map((t) => t === tr ? new THREE.VectorKeyframeTrack(t.name, Array.from(t.times), Array.from(v)) : t));
     if (maxFix > 1) log(`  ground-lock ${clip.name}: quadril abaixado até ${maxFix.toFixed(1)} cm`);
+  }
+
+  // ---- Agarrão (grab): clips gerados a partir dos landmarks de vídeo (MediaPipe) ----
+  if (cfg.grab) {
+    const g = cfg.grab, fps = g.fps;
+    const idle = clipOf('idle');
+    const idleHold = new Map();
+    for (const t of idle.tracks) if (t.name.endsWith('.quaternion')) idleHold.set(t.name.replace('.quaternion', ''), new THREE.Quaternion(t.values[0], t.values[1], t.values[2], t.values[3]));
+    const prep = async (file, endFrame) => {
+      const lm = smoothLandmarks(await loadLandmarks(path.join(ROOT, 'scripts/data', file)), { sigma: g.smooth ?? 2 });
+      normalizeHeading(lm);
+      const n = Math.min(lm.n, endFrame + 1);
+      return { ...lm, n, P: lm.P.slice(0, n), V: lm.V.slice(0, n) };
+    };
+    const A = await prep(g.attack, g.attackEnd), Vv = await prep(g.victim, g.victimEnd);
+    const durA = (A.n - 1) / fps;
+    const victimFps = (Vv.n - 1) / durA;          // o defensor é esticado no tempo para terminar junto com o atacante
+    const common = { scale, floorRef, footY, idleHold };
+    const cA = retargetClip(base, A, { name: 'grabAttack', fps, ...common });
+    const cV = retargetClip(base, Vv, { name: 'grabVictim', fps: victimFps, ...common });
+    clips.push(cA, cV);
+    meta.clips.grabAttack = { duration: +cA.duration.toFixed(3) }; meta.clips.grabVictim = { duration: +cV.duration.toFixed(3) };
+    meta.grab = { fps, strikesSec: strikeEvents(A, fps).events };
+    log(`  grab: atacante ${A.n} frames (${cA.duration.toFixed(2)}s), defensor ${Vv.n} frames esticados p/ ${cV.duration.toFixed(2)}s; golpes detectados: ${meta.grab.strikesSec.map((e) => e.sec + 's').join(' ')}`);
   }
 
   const sample = (clip, fn, step = 1 / 60) => { const out = []; for (let t = 0; t <= clip.duration + 1e-6; t += step) { poseAt(clip, Math.min(t, clip.duration)); out.push({ t, ...fn() }); } return out; };

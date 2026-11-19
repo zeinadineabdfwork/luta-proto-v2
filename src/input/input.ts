@@ -2,8 +2,8 @@ import { EMPTY_INPUT, InputState } from '../combat/types.js';
 
 type Key = keyof InputState;
 const KEYMAP: Record<Key, string[]>[] = [
-  { left: ['KeyA'], right: ['KeyD'], up: ['KeyW'], down: ['KeyS'], punch: ['KeyJ'], kick: ['KeyK'], special: ['KeyL'] },
-  { left: ['ArrowLeft'], right: ['ArrowRight'], up: ['ArrowUp'], down: ['ArrowDown'], punch: ['Numpad1', 'Slash'], kick: ['Numpad2', 'Period'], special: ['Numpad3', 'Comma'] },
+  { left: ['KeyA'], right: ['KeyD'], up: ['KeyW'], down: ['KeyS'], punch: ['KeyJ'], kick: ['KeyK'], special: ['KeyL'], grab: ['KeyH'] },
+  { left: ['ArrowLeft'], right: ['ArrowRight'], up: ['ArrowUp'], down: ['ArrowDown'], punch: ['Numpad1', 'Slash'], kick: ['Numpad2', 'Period'], special: ['Numpad3', 'Comma'], grab: ['Numpad0', 'Semicolon'] },
 ];
 
 const DEADZONE = 0.5;
@@ -43,14 +43,15 @@ export class InputManager {
       down: b(13) || ay > DEADZONE,
       punch: b(0) || b(2),   // A / X  (Cruz / Quadrado)
       kick: b(1) || b(3),    // B / Y  (Círculo / Triângulo)
-      special: b(4) || b(5) || b(6) || b(7),   // LB/RB/LT/RT
+      special: b(4) || b(5),   // LB / RB
+      grab: b(6) || b(7),      // LT / RT
     };
   }
 
   private readKeys(p: number): InputState {
     const m = KEYMAP[p];
     const down = (k: Key) => m[k].some((c) => this.keys.has(c));
-    return { left: down('left'), right: down('right'), up: down('up'), down: down('down'), punch: down('punch'), kick: down('kick'), special: down('special') };
+    return { left: down('left'), right: down('right'), up: down('up'), down: down('down'), punch: down('punch'), kick: down('kick'), special: down('special'), grab: down('grab') };
   }
 
   /** Chamar uma vez por frame lógico. */
@@ -65,7 +66,7 @@ export class InputManager {
       let s = k;
       if (gp) {
         const g = InputManager.readPad(gp);
-        s = { left: k.left || g.left, right: k.right || g.right, up: k.up || g.up, down: k.down || g.down, punch: k.punch || g.punch, kick: k.kick || g.kick, special: k.special || g.special };
+        s = { left: k.left || g.left, right: k.right || g.right, up: k.up || g.up, down: k.down || g.down, punch: k.punch || g.punch, kick: k.kick || g.kick, special: k.special || g.special, grab: k.grab || g.grab };
         select ||= !!gp.buttons[8]?.pressed;
         this.padNotes.push(`P${p + 1}: controle "${gp.id.slice(0, 40)}"${gp.mapping === 'standard' ? '' : ' (mapeamento NAO padrao)'}`);
       } else {

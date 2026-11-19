@@ -1,6 +1,6 @@
 import { AttackData, FighterData, InputState, MoveName, Rect } from './types.js';
 
-export type FighterState = 'idle' | 'walk' | 'jump' | 'attack' | 'hitstun' | 'ko';
+export type FighterState = 'idle' | 'walk' | 'jump' | 'attack' | 'hitstun' | 'ko' | 'grab' | 'grabbed';
 export type AttackPhase = 'startup' | 'active' | 'recovery';
 
 /** Lutador: máquina de estados determinística. Unidades: cm, frames de 1/60 s. y = altura dos pés (0 = chão). */
@@ -18,11 +18,15 @@ export class Fighter {
   frame = 0;
   hitstunTotal = 0;
   hasHit = false;
+  grabRequested = false;  // pediu agarrão; a Match decide se conecta
+  grabCd = 0;
+  grabRate = 1;           // velocidade dos clips do agarrão em curso
   fireballOut = false;   // a Match avisa se já há um projétil dele em cena (só um por vez)
   pendingProjectile = false;
   private prevPunch = false;
   private prevKick = false;
   private prevSpecial = false;
+  private prevGrab = false;
 
   constructor(readonly data: FighterData, private startX: number, private startFacing: 1 | -1) {
     this.x = startX;
@@ -34,7 +38,8 @@ export class Fighter {
     this.x = this.startX; this.y = 0; this.vy = 0; this.vx = 0; this.kb = 0;
     this.facing = this.startFacing; this.health = this.data.maxHealth;
     this.state = 'idle'; this.move = null; this.walkDir = 0; this.frame = 0; this.hitstunTotal = 0;
-    this.hasHit = false; this.prevPunch = false; this.prevKick = false; this.prevSpecial = false;
+    this.hasHit = false; this.prevPunch = false; this.prevKick = false; this.prevSpecial = false; this.prevGrab = false;
+    this.grabRequested = false; this.grabCd = 0; this.grabRate = 1;
     this.fireballOut = false; this.pendingProjectile = false;
   }
 
@@ -61,8 +66,11 @@ export class Fighter {
     const punchP = input.punch && !this.prevPunch; this.prevPunch = input.punch;
     const kickP = input.kick && !this.prevKick; this.prevKick = input.kick;
     const specialP = input.special && !this.prevSpecial; this.prevSpecial = input.special;
+    const grabP = input.grab && !this.prevGrab; this.prevGrab = input.grab;
+    if (this.grabCd > 0) this.grabCd--;
 
     switch (this.state) {
+      case 'grab': case 'grabbed': break;      // a Match conduz a cena (frame e posição)
       case 'ko':
         this.x += this.kb; this.kb *= 0.86; this.applyGravity(); this.frame++;
         break;
@@ -91,6 +99,7 @@ export class Fighter {
       default: { // idle | walk
         this.facing = opponentX >= this.x ? 1 : -1;
         this.walkDir = 0;
+        if (grabP && this.data.grab && this.grabCd === 0 && this.grounded) { this.grabRequested = true; return; }
         if (specialP && this.data.moves.special && !this.fireballOut) {
           this.move = 'special'; this.hasHit = false; this.setState('attack');
           return;
@@ -127,6 +136,19 @@ export class Fighter {
       this.y += this.vy; this.vy -= this.data.gravity;
       if (this.y <= 0) { this.y = 0; this.vy = 0; }
     }
+  }
+
+  /** Entra/sai da cena de agarrão (conduzida pela Match). */
+  beginGrab(role: 'grab' | 'grabbed', facing: 1 | -1, rate: number): void {
+    this.move = null; this.hasHit = false; this.pendingProjectile = false; this.walkDir = 0;
+    this.vx = 0; this.vy = 0; this.y = 0; this.kb = 0; this.facing = facing; this.grabRate = rate;
+    this.setState(role);
+  }
+  endGrab(): void { this.setState('idle'); }
+  /** Vítima solta: cai (KO) ou se afasta em hitstun. */
+  releaseVictim(dir: 1 | -1): void {
+    if (this.health <= 0) { this.kb = dir * 6; this.hitstunTotal = 0; this.setState('ko'); return; }
+    this.kb = dir * 3.5; this.hitstunTotal = 22; this.setState('hitstun');
   }
 
   takeHit(a: AttackData, attackerFacing: 1 | -1): void {

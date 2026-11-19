@@ -24,6 +24,16 @@ export interface AttackData {
   projectile?: ProjectileData; // se existir, o golpe não tem hitbox corpo a corpo: o dano vem do projétil
 }
 
+/** Agarrão cinematográfico: o atacante e a vítima tocam clips sincronizados (gerados do vídeo). */
+export interface GrabData {
+  range: number;          // alcance (cm, centro a centro) para o agarrão conectar
+  gap: number;            // distância entre os dois durante a cena (cm)
+  rate: number;           // velocidade de reprodução dos clips (1 = tempo original)
+  frames: number;         // duração da cena em frames lógicos (60/s)
+  hits: { frame: number; damage: number; big?: boolean }[];  // quando cada golpe do agarrão acerta (frame da cena)
+  cooldown: number;       // frames até poder agarrar de novo
+}
+
 export interface FighterData {
   id: string;
   name: string;
@@ -37,7 +47,8 @@ export interface FighterData {
   jumpSquat: number;       // frames de agachada antes de sair do chão
   hurt: Rect;
   moves: { punch: AttackData; kick: AttackData; special?: AttackData };
+  grab?: GrabData;
 }
 
-export interface InputState { left: boolean; right: boolean; up: boolean; down: boolean; punch: boolean; kick: boolean; special: boolean }
-export const EMPTY_INPUT: InputState = { left: false, right: false, up: false, down: false, punch: false, kick: false, special: false };
+export interface InputState { left: boolean; right: boolean; up: boolean; down: boolean; punch: boolean; kick: boolean; special: boolean; grab: boolean }
+export const EMPTY_INPUT: InputState = { left: false, right: false, up: false, down: false, punch: false, kick: false, special: false, grab: false };

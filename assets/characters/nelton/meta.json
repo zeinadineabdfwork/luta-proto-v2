@@ -47,6 +47,12 @@
     "hit": {
       "duration": 1,
       "source": "Rib Hit.fbx"
+    },
+    "grabAttack": {
+      "duration": 8
+    },
+    "grabVictim": {
+      "duration": 8
     }
   },
   "forward": [
@@ -55,5 +61,55 @@
     0.9998574266488286
   ],
   "groundOffsetCm": 0.35,
-  "idleHeightCm": 175.3
+  "idleHeightCm": 175.3,
+  "grab": {
+    "fps": 30,
+    "strikesSec": [
+      {
+        "frame": 11,
+        "sec": 0.37,
+        "speed": 2.9
+      },
+      {
+        "frame": 31,
+        "sec": 1.03,
+        "speed": 2.3
+      },
+      {
+        "frame": 49,
+        "sec": 1.63,
+        "speed": 2.6
+      },
+      {
+        "frame": 84,
+        "sec": 2.8,
+        "speed": 2.2
+      },
+      {
+        "frame": 108,
+        "sec": 3.6,
+        "speed": 3.5
+      },
+      {
+        "frame": 123,
+        "sec": 4.1,
+        "speed": 4.2
+      },
+      {
+        "frame": 153,
+        "sec": 5.1,
+        "speed": 2.4
+      },
+      {
+        "frame": 193,
+        "sec": 6.43,
+        "speed": 5
+      },
+      {
+        "frame": 217,
+        "sec": 7.23,
+        "speed": 4
+      }
+    ]
+  }
 }

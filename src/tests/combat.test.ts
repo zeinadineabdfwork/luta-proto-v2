@@ -148,3 +148,35 @@ test('Dona Ivone não tem especial: o botão não faz nada', () => {
   m.step({ ...EMPTY_INPUT, special: true }, EMPTY_INPUT);
   assert.equal(m.p1.state, 'idle');
 });
+
+test('agarrão: Nelton ao alcance inicia a cena na hora; vítima entra em "grabbed" e termina em hitstun', () => {
+  const G: InputState = { ...EMPTY_INPUT, grab: true };
+  const m = new Match(new Fighter(NELTON, -50, 1), new Fighter(IVONE, 50, -1));
+  m.step(G, EMPTY_INPUT);
+  assert.equal(m.p1.state, 'grab'); assert.equal(m.p2.state, 'grabbed');
+  assert.ok(Math.abs(m.p2.x - m.p1.x - NELTON.grab!.gap) < 1e-6, 'posicionados à distância da cena');
+  const dmg = NELTON.grab!.hits.reduce((a, h) => a + h.damage, 0);
+  let guard = 0; while (m.grab && guard++ < 2000) m.step(EMPTY_INPUT, EMPTY_INPUT);
+  assert.equal(m.p2.health, 1000 - dmg);
+  assert.equal(m.p1.state, 'idle'); assert.equal(m.p2.state, 'hitstun');
+});
+
+test('agarrão: longe não conecta; no ar não conecta; recarga impede repetir', () => {
+  const G: InputState = { ...EMPTY_INPUT, grab: true };
+  const far = new Match(new Fighter(NELTON, -300, 1), new Fighter(IVONE, 300, -1));
+  far.step(G, EMPTY_INPUT); assert.equal(far.p1.state, 'idle'); assert.equal(far.grab, null);
+  const m = new Match(new Fighter(NELTON, -50, 1), new Fighter(IVONE, 50, -1));
+  m.step(G, EMPTY_INPUT);
+  let guard = 0; while (m.grab && guard++ < 2000) m.step(EMPTY_INPUT, EMPTY_INPUT);
+  m.p2.x = m.p1.x + 60; for (let i = 0; i < 40; i++) m.step(EMPTY_INPUT, EMPTY_INPUT);
+  m.step(G, EMPTY_INPUT); assert.equal(m.grab, null, 'em recarga');
+});
+
+test('agarrão: se a vida zera, a vítima cai em KO só no fim da cena', () => {
+  const G: InputState = { ...EMPTY_INPUT, grab: true };
+  const m = new Match(new Fighter(NELTON, -50, 1), new Fighter(IVONE, 50, -1));
+  m.p2.health = 100;
+  m.step(G, EMPTY_INPUT);
+  let guard = 0; while (m.grab && guard++ < 2000) { assert.equal(m.phase, 'fight'); m.step(EMPTY_INPUT, EMPTY_INPUT); }
+  assert.equal(m.p2.state, 'ko'); assert.equal(m.phase, 'over'); assert.equal(m.winner, 1);
+});

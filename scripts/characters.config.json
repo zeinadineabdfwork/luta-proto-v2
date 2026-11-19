@@ -16,7 +16,24 @@
       "kick": "Mma Kick.fbx",
       "hit": "Rib Hit.fbx"
     },
-    "tips": { "punch": ["mixamorigRightHand", "mixamorigLeftHand"], "kick": ["mixamorigRightFoot", "mixamorigLeftFoot"] }
+    "tips": {
+      "punch": [
+        "mixamorigRightHand",
+        "mixamorigLeftHand"
+      ],
+      "kick": [
+        "mixamorigRightFoot",
+        "mixamorigLeftFoot"
+      ]
+    },
+    "grab": {
+      "attack": "grab_hit_animation_data.json",
+      "victim": "grab_animation_data.json",
+      "fps": 30,
+      "attackEnd": 240,
+      "victimEnd": 180,
+      "smooth": 2
+    }
   },
   "ivone": {
     "name": "Dona Ivone",
@@ -35,6 +52,25 @@
       "kick": "Kicking.fbx",
       "hit": "Stunned.fbx"
     },
-    "tips": { "punch": ["mixamorigRightHand", "mixamorigLeftHand", "mixamorigRightForeArm", "mixamorigLeftForeArm"], "kick": ["mixamorigRightFoot", "mixamorigLeftFoot"] }
+    "tips": {
+      "punch": [
+        "mixamorigRightHand",
+        "mixamorigLeftHand",
+        "mixamorigRightForeArm",
+        "mixamorigLeftForeArm"
+      ],
+      "kick": [
+        "mixamorigRightFoot",
+        "mixamorigLeftFoot"
+      ]
+    },
+    "grab": {
+      "attack": "grab_hit_animation_data.json",
+      "victim": "grab_animation_data.json",
+      "fps": 30,
+      "attackEnd": 240,
+      "victimEnd": 180,
+      "smooth": 2
+    }
   }
 }

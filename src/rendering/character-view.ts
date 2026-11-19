@@ -69,6 +69,10 @@ export class CharacterView {
         const t = f.frame < peak ? lerp(ts, ti, f.frame / peak) : lerp(ti, te, (f.frame - peak) / (a.active / 2 + a.recovery));
         return { clip: clipName, t, fade: 0.05 };
       }
+      case 'grab': case 'grabbed': {
+        const clip = f.state === 'grab' ? 'grabAttack' : 'grabVictim';
+        return { clip, t: (f.frame / 60) * f.grabRate, fade: 0.1 };
+      }
       case 'jump': {
         const c = m.jump, sq = f.data.jumpSquat;
         const t = f.frame < sq

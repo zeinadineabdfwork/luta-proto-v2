@@ -19,6 +19,14 @@ export const NELTON: FighterData = {
       projectile: { speed: 9, spawn: { x: 62, y: 122 }, w: 46, h: 40, life: 140 },
     },
   },
+  // Agarrão: cena de ~6 s (8 s do vídeo a 1.3x). Os golpes caem nos picos de movimento detectados no vídeo.
+  grab: {
+    range: 115, gap: 62, rate: 1.3, frames: 369, cooldown: 300,
+    hits: [
+      { frame: 17, damage: 20 }, { frame: 48, damage: 20 }, { frame: 76, damage: 25 }, { frame: 130, damage: 25 },
+      { frame: 168, damage: 35 }, { frame: 191, damage: 35 }, { frame: 238, damage: 40 }, { frame: 300, damage: 60, big: true }, { frame: 338, damage: 70, big: true },
+    ],
+  },
 };
 
 /** Dona Ivone: mais lenta, golpes pesados. */

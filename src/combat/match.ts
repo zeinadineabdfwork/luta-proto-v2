@@ -1,6 +1,6 @@
 import { CAM_SMOOTH, CAM_START_X, SCREEN_MARGIN, STAGE_HALF, VIEW_W } from '../data/stage.js';
 import { Fighter } from './fighter.js';
-import { AttackData, EMPTY_INPUT, InputState, ProjectileData, Rect } from './types.js';
+import { AttackData, EMPTY_INPUT, GrabData, InputState, ProjectileData, Rect } from './types.js';
 
 export function overlap(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -13,6 +13,9 @@ export interface Projectile { owner: Fighter; target: Fighter; data: AttackData;
 /** Explosão de fogo (flipbook). kind 'cast' = pequena, na mão; 'impact' = grande, no alvo. */
 export interface Blast { x: number; y: number; age: number; kind: 'cast' | 'impact' }
 export const BLAST_LIFE = 30;
+
+/** Cena de agarrão em curso (atacante e vítima presos aos clips sincronizados). */
+export interface GrabScene { att: Fighter; def: Fighter; frame: number; total: number; data: GrabData; done: number }
 
 const PUSH_MIN = 52;          // distância mínima entre os centros (cm)
 const HITSTOP = 6;
@@ -28,6 +31,7 @@ export class Match {
   sparks: Spark[] = [];
   projectiles: Projectile[] = [];
   blasts: Blast[] = [];
+  grab: GrabScene | null = null;
   events: string[] = [];
   private prevAny = false;
 
@@ -39,7 +43,7 @@ export class Match {
   restart(): void {
     this.p1.reset(); this.p2.reset();
     this.phase = this.introFrames > 0 ? 'intro' : 'fight';
-    this.winner = 0; this.phaseFrames = 0; this.hitstop = 0; this.shake = 0; this.sparks = []; this.projectiles = []; this.blasts = []; this.events = [];
+    this.winner = 0; this.phaseFrames = 0; this.hitstop = 0; this.shake = 0; this.sparks = []; this.projectiles = []; this.blasts = []; this.grab = null; this.events = [];
     this.camX = this.targetCam();
   }
 
@@ -93,6 +97,8 @@ export class Match {
 
     this.p1.update(i1, this.p2.x);
     this.p2.update(i2, this.p1.x);
+    if (this.grab) { this.stepGrab(); this.updateCamera(); this.stepProjectiles(); return; }
+    this.tryGrab();
     this.pushApart();
     this.confine();
     this.updateCamera();
@@ -138,6 +144,54 @@ export class Match {
     this.log(`${who} acertou ${label}: -${a.damage} (vida ${def.health})`);
   }
 
+  /** Se alguém pediu agarrão e o oponente está ao alcance (no chão, de pé), a cena começa na hora. */
+  private tryGrab(): void {
+    for (const att of [this.p1, this.p2]) {
+      if (!att.grabRequested) continue;
+      att.grabRequested = false;
+      const def = att === this.p1 ? this.p2 : this.p1, g = att.data.grab;
+      if (!g || !att.grounded || !def.grounded || def.state === 'ko' || def.state === 'grabbed' || def.state === 'jump') continue;
+      if (Math.abs(def.x - att.x) > g.range) continue;
+      const dir: 1 | -1 = def.x >= att.x ? 1 : -1;
+      // posiciona os dois frente a frente, à distância da cena, sem sair da tela
+      const lo = Math.max(-STAGE_HALF + SCREEN_MARGIN, this.camX - VIEW_W / 2 + SCREEN_MARGIN) + g.gap / 2;
+      const hi = Math.min(STAGE_HALF - SCREEN_MARGIN, this.camX + VIEW_W / 2 - SCREEN_MARGIN) - g.gap / 2;
+      const c = Math.max(lo, Math.min(hi, (att.x + def.x) / 2));
+      att.x = c - dir * g.gap / 2; def.x = c + dir * g.gap / 2;
+      att.beginGrab('grab', dir, g.rate); def.beginGrab('grabbed', (-dir) as 1 | -1, g.rate);
+      this.grab = { att, def, frame: 0, total: g.frames, data: g, done: 0 };
+      this.log(`${att.data.name} agarrou ${def.data.name}!`);
+      this.shake = 8; this.sparks.push({ x: (att.x + def.x) / 2, y: 110, age: 0, big: false });
+      return;
+    }
+  }
+
+  private stepGrab(): void {
+    const gs = this.grab!; const { att, def, data } = gs;
+    gs.frame++; att.frame = gs.frame; def.frame = gs.frame;
+    while (gs.done < data.hits.length && gs.frame >= data.hits[gs.done].frame) {
+      const h = data.hits[gs.done++];
+      def.health = Math.max(0, def.health - h.damage);
+      this.hitstop = h.big ? 8 : 3; this.shake = h.big ? 12 : 6;
+      this.sparks.push({ x: (att.x + def.x) / 2, y: 105 + (gs.done % 3) * 12, age: 0, big: !!h.big });
+      this.log(`agarrão: -${h.damage} (vida ${def.health})`);
+    }
+    if (gs.frame >= gs.total) {
+      att.endGrab(); att.grabCd = data.cooldown; def.releaseVictim(att.facing); this.grab = null;
+      if (def.health <= 0) this.shake = 14;
+      this.finishIfOver();
+    }
+  }
+
+  private finishIfOver(): void {
+    if (this.p1.health <= 0 || this.p2.health <= 0) {
+      this.phase = 'over'; this.phaseFrames = 0;
+      this.winner = this.p1.health === this.p2.health ? 0 : this.p1.health > this.p2.health ? 1 : 2;
+      this.hitstop = Math.max(this.hitstop, 10);
+      this.log(`KO! vencedor: ${this.winner || 'empate'}`);
+    }
+  }
+
   private spawnProjectiles(): void {
     for (const f of [this.p1, this.p2]) {
       const sp = f.data.moves.special;
@@ -158,7 +212,7 @@ export class Match {
     this.projectiles = this.projectiles.filter((p) => {
       p.x += p.dir * p.proj.speed; p.age++;
       const box: Rect = { x: p.x - p.proj.w / 2, y: p.y - p.proj.h / 2, w: p.proj.w, h: p.proj.h };
-      if (p.target.state !== 'ko' && overlap(box, p.target.hurtbox())) {
+      if (p.target.state !== 'ko' && p.target.state !== 'grabbed' && p.target.state !== 'grab' && overlap(box, p.target.hurtbox())) {
         this.land(p.data, p.dir, p.target, box, p.owner === this.p1 ? 'P1' : 'P2', 'bola de fogo');
         this.blasts.push({ x: p.x + p.dir * 20, y: p.y, age: 0, kind: 'impact' });
         return false;

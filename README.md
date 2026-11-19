@@ -14,6 +14,7 @@ npm run build:assets   # (opcional) regenera assets/ a partir de character/*.fbx
 | Soco | J | Num1 ou / |
 | Chute | K | Num2 ou . |
 | Bola de fogo (só Nelton) | L | Num3 ou , |
+| Agarrão (só Nelton) | H | Num0 ou ; |
 Controle: D-pad/analógico, A/X = soco, B/Y = chute. F1 = debug (hurtbox verde, hitbox vermelha).
 
 ## O que há de novo
@@ -28,3 +29,7 @@ Os arquivos não têm animação de morte. O K.O. usa a reação a golpe + queda
 
 ## Efeitos de fogo
 Bola de fogo do Nelton: carga na mão, projétil que atravessa a tela (só uma por vez) e explosão no impacto. Efeitos em `assets/fx/` (atlas WebP feitos a partir dos pacotes Fantasy VFX Fire Magic e Ember Flipbooks Lite; verifique as licenças antes de publicar os arquivos num repositório público).
+
+## Agarrão (grab)
+`scripts/data/grab_hit_animation_data.json` (atacante) e `grab_animation_data.json` (vítima) são landmarks 3D (MediaPipe, 33 pontos). O `npm run build:assets` suaviza o ruído, normaliza a direção inicial e converte os pontos em rotações do esqueleto Mixamo de cada personagem (clips `grabAttack` e `grabVictim`, dentro do `model.glb`).
+No jogo: o Nelton aperta H a até 1,15 m do adversário (no chão); a cena começa na hora, com os dois frente a frente a 62 cm. Duração e golpes em `src/data/characters.ts` (`grab`).
