@@ -30,8 +30,8 @@
       "attack": "grab_hit_animation_data.json",
       "victim": "grab_animation_data.json",
       "fps": 30,
-      "attackEnd": 240,
-      "victimEnd": 180,
+      "attackEnd": 216,
+      "victimEnd": 227,
       "smooth": 2
     }
   },
@@ -68,8 +68,8 @@
       "attack": "grab_hit_animation_data.json",
       "victim": "grab_animation_data.json",
       "fps": 30,
-      "attackEnd": 240,
-      "victimEnd": 180,
+      "attackEnd": 216,
+      "victimEnd": 227,
       "smooth": 2
     }
   }

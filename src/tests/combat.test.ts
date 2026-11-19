@@ -161,6 +161,16 @@ test('agarrão: Nelton ao alcance inicia a cena na hora; vítima entra em "grabb
   assert.equal(m.p1.state, 'idle'); assert.equal(m.p2.state, 'hitstun');
 });
 
+test('agarrão do Nelton funciona contra um oponente que não é a Dona Ivone', () => {
+  const G: InputState = { ...EMPTY_INPUT, grab: true };
+  const m = new Match(new Fighter(NELTON, -50, 1), new Fighter(PLACEHOLDER_B, 50, -1));
+  m.step(G, EMPTY_INPUT);
+  assert.equal(m.p1.state, 'grab'); assert.equal(m.p2.state, 'grabbed');
+  let guard = 0; while (m.grab && guard++ < 2000) m.step(EMPTY_INPUT, EMPTY_INPUT);
+  assert.equal(m.p2.health, 1000 - NELTON.grab!.hits.reduce((sum, hit) => sum + hit.damage, 0));
+  assert.equal(m.p2.state, 'hitstun');
+});
+
 test('agarrão: longe não conecta; no ar não conecta; recarga impede repetir', () => {
   const G: InputState = { ...EMPTY_INPUT, grab: true };
   const far = new Match(new Fighter(NELTON, -300, 1), new Fighter(IVONE, 300, -1));
