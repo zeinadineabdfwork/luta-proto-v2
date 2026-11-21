@@ -59,13 +59,39 @@ function facingOf(P) {
   return f1.normalize().add(f2.normalize());
 }
 
-/** Gira todos os pontos para que o personagem comece olhando para +Z. */
-export function normalizeHeading({ n, P }, frames = 5) {
-  const f = new THREE.Vector3();
-  for (let i = 0; i < Math.min(frames, n); i++) f.add(facingOf(P[i]));
-  const yaw = Math.atan2(f.x, f.z);
+/**
+ * Gira todos os pontos em torno de Y. Sem `dir`, o personagem passa a olhar para +Z no início.
+ * Com `dir` = [x, z] (direção horizontal no espaço do vídeo), essa direção vira +Z (a frente no jogo).
+ */
+export function normalizeHeading({ n, P }, { dir = null, frames = 5 } = {}) {
+  let yaw;
+  if (dir) yaw = Math.atan2(dir[0], dir[1]);
+  else {
+    const f = new THREE.Vector3();
+    for (let i = 0; i < Math.min(frames, n); i++) f.add(facingOf(P[i]));
+    yaw = Math.atan2(f.x, f.z);
+  }
   for (let i = 0; i < n; i++) for (let l = 0; l < 33; l++) { const q = v3(P[i][l]).applyAxisAngle(Y, -yaw); P[i][l] = [q.x, q.y, q.z]; }
   return yaw;
+}
+
+/** Picos de extensão do pé (chutes): frame, distância horizontal ao quadril e direção [x, z]. */
+export function kickPeaks({ n, P }, minReach = 0.55) {
+  const out = [];
+  const ext = P.map((p) => {
+    const hip = mid(p[LM.lHip], p[LM.rHip]); let best = { h: 0 };
+    for (const i of [LM.lAn, LM.rAn, LM.lFt, LM.rFt]) { const d = v3(p[i]).sub(hip); const h = Math.hypot(d.x, d.z); if (h > best.h) best = { h, x: d.x, z: d.z, y: d.y }; }
+    return best;
+  });
+  for (let f = 1; f < n - 1; f++) if (ext[f].h > minReach && ext[f].h >= ext[f - 1].h && ext[f].h >= ext[f + 1].h && (!out.length || f - out[out.length - 1].frame > 8)) out.push({ frame: f, reach: ext[f].h, x: ext[f].x, z: ext[f].z, y: ext[f].y });
+  const dir = out.reduce((a, k) => [a[0] + k.x / k.reach, a[1] + k.z / k.reach], [0, 0]);
+  const len = Math.hypot(dir[0], dir[1]) || 1;
+  return { peaks: out, dir: [dir[0] / len, dir[1] / len] };
+}
+
+/** Ângulo (graus) do tronco em relação à vertical, por frame. */
+export function torsoTilt({ n, P }) {
+  return P.map((p) => { const u = mid(p[LM.lSh], p[LM.rSh]).sub(mid(p[LM.lHip], p[LM.rHip])); return Math.acos(Math.max(-1, Math.min(1, u.y / u.length()))) * 180 / Math.PI; });
 }
 
 function basisQuat(x, y, z) { return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z)); }
@@ -83,10 +109,10 @@ function frameFromLeftForward(left, fwd) {
 /**
  * @param base  objeto carregado do FBX (esqueleto Mixamo, em pose de bind)
  * @param lm    { n, P } já suavizado/normalizado
- * @param opts  { name, fps, scale, floorRef, footY(): menor altura do pé no mundo (cm), idleHold: Map<boneName,quat> }
+ * @param opts  { name, fps, scale, contactLift(): quanto o corpo está acima do chão (cm; pés ou, deitado, costas/cabeça), idleHold }
  */
 export function retargetClip(base, lm, opts) {
-  const { n, P } = lm; const { name, fps, scale, floorRef, footY, idleHold } = opts;
+  const { n, P } = lm; const { name, fps, scale, contactLift, idleHold } = opts;
   const bone = (nm) => base.getObjectByName('mixamorig' + nm);
   base.updateMatrixWorld(true);
   const bindW = {}, bindPos = {}, bindLocal = {};
@@ -159,7 +185,7 @@ export function retargetClip(base, lm, opts) {
   const applyFrame = (f) => { for (const nm of names) bone(nm).quaternion.copy(out[nm][f]); };
   for (let f = 0; f < n; f++) {
     bone('Hips').position.copy(hipsBind); applyFrame(f); base.updateMatrixWorld(true);
-    hipsY.push(hipsBind.y - (footY() - floorRef) / scale);
+    hipsY.push(hipsBind.y - contactLift() / scale);
   }
   const ky = gaussKernel(2.5), ry = (ky.length - 1) / 2;
   const hy = hipsY.map((_, f) => { let a = 0; for (let i = -ry; i <= ry; i++) a += ky[i + ry] * hipsY[Math.min(n - 1, Math.max(0, f + i))]; return a; });

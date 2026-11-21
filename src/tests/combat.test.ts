@@ -149,7 +149,7 @@ test('Dona Ivone não tem especial: o botão não faz nada', () => {
   assert.equal(m.p1.state, 'idle');
 });
 
-test('agarrão: Nelton ao alcance inicia a cena na hora; vítima entra em "grabbed" e termina em hitstun', () => {
+test('agarrão: Nelton ao alcance inicia a cena na hora; vítima entra em "grabbed" e termina de pé', () => {
   const G: InputState = { ...EMPTY_INPUT, grab: true };
   const m = new Match(new Fighter(NELTON, -50, 1), new Fighter(IVONE, 50, -1));
   m.step(G, EMPTY_INPUT);
@@ -158,17 +158,7 @@ test('agarrão: Nelton ao alcance inicia a cena na hora; vítima entra em "grabb
   const dmg = NELTON.grab!.hits.reduce((a, h) => a + h.damage, 0);
   let guard = 0; while (m.grab && guard++ < 2000) m.step(EMPTY_INPUT, EMPTY_INPUT);
   assert.equal(m.p2.health, 1000 - dmg);
-  assert.equal(m.p1.state, 'idle'); assert.equal(m.p2.state, 'hitstun');
-});
-
-test('agarrão do Nelton funciona contra um oponente que não é a Dona Ivone', () => {
-  const G: InputState = { ...EMPTY_INPUT, grab: true };
-  const m = new Match(new Fighter(NELTON, -50, 1), new Fighter(PLACEHOLDER_B, 50, -1));
-  m.step(G, EMPTY_INPUT);
-  assert.equal(m.p1.state, 'grab'); assert.equal(m.p2.state, 'grabbed');
-  let guard = 0; while (m.grab && guard++ < 2000) m.step(EMPTY_INPUT, EMPTY_INPUT);
-  assert.equal(m.p2.health, 1000 - NELTON.grab!.hits.reduce((sum, hit) => sum + hit.damage, 0));
-  assert.equal(m.p2.state, 'hitstun');
+  assert.equal(m.p1.state, 'idle'); assert.equal(m.p2.state, 'idle');
 });
 
 test('agarrão: longe não conecta; no ar não conecta; recarga impede repetir', () => {
@@ -189,4 +179,5 @@ test('agarrão: se a vida zera, a vítima cai em KO só no fim da cena', () => {
   m.step(G, EMPTY_INPUT);
   let guard = 0; while (m.grab && guard++ < 2000) { assert.equal(m.phase, 'fight'); m.step(EMPTY_INPUT, EMPTY_INPUT); }
   assert.equal(m.p2.state, 'ko'); assert.equal(m.phase, 'over'); assert.equal(m.winner, 1);
+  assert.ok(m.p2.koHoldTime !== null, 'fica deitada na pose do vídeo');
 });

@@ -30,6 +30,6 @@ Os arquivos não têm animação de morte. O K.O. usa a reação a golpe + queda
 ## Efeitos de fogo
 Bola de fogo do Nelton: carga na mão, projétil que atravessa a tela (só uma por vez) e explosão no impacto. Efeitos em `assets/fx/` (atlas WebP feitos a partir dos pacotes Fantasy VFX Fire Magic e Ember Flipbooks Lite; verifique as licenças antes de publicar os arquivos num repositório público).
 
-## Agarrão (grab)
-`scripts/data/grab_animation_data.json` (vítima, recebendo o golpe) e `grab_hit_animation_data.json` (atacante, dando os golpes) são landmarks 3D (MediaPipe, 33 pontos). O `npm run build:assets` suaviza o ruído, normaliza a direção inicial e converte os pontos em rotações do esqueleto Mixamo de cada personagem (clips `grabAttack` e `grabVictim`, dentro do `model.glb`). Rode-o após atualizar esses JSONs para gerar os novos clips.
-No jogo: o Nelton aperta H a até 1,15 m do adversário no chão; a cena começa na hora, com os dois frente a frente a 62 cm. O agarrão afeta qualquer oponente da partida, não apenas a Dona Ivone. Duração e golpes em `src/data/characters.ts` (`grab`).
+## Sequência de chutes (botão H, só Nelton)
+`scripts/data/dando_chute.json` (atacante) e `recebendo_chute.json` (vítima) são landmarks 3D (MediaPipe) extraídos dos vídeos. O `npm run build:assets` suaviza os pontos, alinha a direção do chute com a frente do jogo (e a vítima com o lado oposto) e converte tudo em rotações do esqueleto Mixamo de cada personagem (clips `grabAttack` e `grabVictim`, dentro do `model.glb`). Deitado, o corpo é apoiado no chão pelas costas/cabeça.
+No jogo: o Nelton aperta H a até 1,2 m do adversário (no chão); a cena começa na hora, com os dois a 78 cm. São 3 chutes (o 2º derruba), a vítima fica deitada e se levanta, ~5,8 s no total. Se a vida zera, ela fica deitada (K.O.). Tempos, dano e deslocamentos em `src/data/characters.ts` (bloco `grab`).

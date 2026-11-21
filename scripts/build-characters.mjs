@@ -13,7 +13,7 @@ import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import * as BGU from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { MeshoptSimplifier } from 'meshoptimizer';
 import sharp from 'sharp';
-import { loadLandmarks, smoothLandmarks, normalizeHeading, retargetClip, strikeEvents } from './lib/retarget.mjs';
+import { loadLandmarks, smoothLandmarks, normalizeHeading, retargetClip, kickPeaks, torsoTilt } from './lib/retarget.mjs';
 
 globalThis.FileReader = class {
   readAsArrayBuffer(blob) { blob.arrayBuffer().then((b) => { this.result = b; this.onloadend?.({ target: this }); }); }
@@ -176,22 +176,35 @@ for (const [id, cfg] of Object.entries(cfgAll)) {
     const idle = clipOf('idle');
     const idleHold = new Map();
     for (const t of idle.tracks) if (t.name.endsWith('.quaternion')) idleHold.set(t.name.replace('.quaternion', ''), new THREE.Quaternion(t.values[0], t.values[1], t.values[2], t.values[3]));
-    const prep = async (file, endFrame) => {
-      const lm = smoothLandmarks(await loadLandmarks(path.join(ROOT, 'scripts/data', file)), { sigma: g.smooth ?? 2 });
-      normalizeHeading(lm);
-      const n = Math.min(lm.n, endFrame + 1);
-      return { ...lm, n, P: lm.P.slice(0, n), V: lm.V.slice(0, n) };
+    // Contato com o chão: em pé são os pés; deitado, costas/cabeça/quadril (raios aproximados do corpo, em cm).
+    const floorLevel = -meta.groundOffsetCm;
+    const BODY = { Hips: 14, Spine1: 13, Spine2: 12, Head: 11, LeftArm: 7, RightArm: 7, LeftForeArm: 5, RightForeArm: 5, LeftHand: 4, RightHand: 4, LeftUpLeg: 9, RightUpLeg: 9, LeftLeg: 7, RightLeg: 7 };
+    const contactLift = () => {
+      let m = footY() - floorRef;
+      for (const [nm, r] of Object.entries(BODY)) m = Math.min(m, wp('mixamorig' + nm).y - r - floorLevel);
+      return m;
     };
-    const A = await prep(g.attack, g.attackEnd), Vv = await prep(g.victim, g.victimEnd);
-    const durA = (A.n - 1) / fps;
-    const victimFps = (Vv.n - 1) / durA;          // o defensor é esticado no tempo para terminar junto com o atacante
-    const common = { scale, floorRef, footY, idleHold };
+    const prep = async (file, endFrame, headingDir) => {
+      const lm = smoothLandmarks(await loadLandmarks(path.join(ROOT, 'scripts/data', file)), { sigma: g.smooth ?? 1.5, medianWin: 3 });
+      const n = Math.min(lm.n, endFrame + 1);
+      const cut = { ...lm, n, P: lm.P.slice(0, n), V: lm.V.slice(0, n) };
+      return { lm: cut, headingDir };
+    };
+    // 1) direção do chute no espaço do vídeo (média dos picos de extensão do pé)
+    const rawA = smoothLandmarks(await loadLandmarks(path.join(ROOT, 'scripts/data', g.attack)), { sigma: g.smooth ?? 1.5, medianWin: 3 });
+    const kp = kickPeaks(rawA);
+    log(`  chutes (frames): ${kp.peaks.map((k) => `${k.frame}(alcance ${(k.reach * 100).toFixed(0)}cm, altura ${(k.y * 100).toFixed(0)}cm)`).join(' ')}; direção no vídeo [${kp.dir.map((n) => n.toFixed(2))}]`);
+    const A = (await prep(g.attack, g.attackEnd)).lm, Vv = (await prep(g.victim, g.victimEnd)).lm;
+    normalizeHeading(A, { dir: kp.dir });                           // direção do chute -> frente do atacante (+Z)
+    normalizeHeading(Vv, { dir: [-kp.dir[0], -kp.dir[1]] });        // a vítima olha para o atacante: oposto do chute -> +Z
+    const common = { scale, contactLift, idleHold };
     const cA = retargetClip(base, A, { name: 'grabAttack', fps, ...common });
-    const cV = retargetClip(base, Vv, { name: 'grabVictim', fps: victimFps, ...common });
+    const cV = retargetClip(base, Vv, { name: 'grabVictim', fps, ...common });
     clips.push(cA, cV);
+    const tilt = torsoTilt(Vv), lying = tilt.map((t, i) => (t > 70 ? i : -1)).filter((i) => i >= 0);
     meta.clips.grabAttack = { duration: +cA.duration.toFixed(3) }; meta.clips.grabVictim = { duration: +cV.duration.toFixed(3) };
-    meta.grab = { fps, strikesSec: strikeEvents(A, fps).events };
-    log(`  grab: atacante ${A.n} frames (${cA.duration.toFixed(2)}s), defensor ${Vv.n} frames esticados p/ ${cV.duration.toFixed(2)}s; golpes detectados: ${meta.grab.strikesSec.map((e) => e.sec + 's').join(' ')}`);
+    meta.grab = { fps, kicks: kp.peaks.map((k) => ({ frame: k.frame, heightCm: +(k.y * 100).toFixed(0) })), lyingFrom: lying[0], lyingTo: lying[lying.length - 1] };
+    log(`  grab: atacante ${A.n} frames, vítima ${Vv.n} frames; deitada nos frames ${lying[0]}-${lying[lying.length - 1]}`);
   }
 
   const sample = (clip, fn, step = 1 / 60) => { const out = []; for (let t = 0; t <= clip.duration + 1e-6; t += step) { poseAt(clip, Math.min(t, clip.duration)); out.push({ t, ...fn() }); } return out; };

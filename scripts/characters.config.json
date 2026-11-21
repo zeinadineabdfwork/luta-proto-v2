@@ -27,12 +27,12 @@
       ]
     },
     "grab": {
-      "attack": "grab_hit_animation_data.json",
-      "victim": "grab_animation_data.json",
+      "attack": "dando_chute.json",
+      "victim": "recebendo_chute.json",
       "fps": 30,
       "attackEnd": 216,
-      "victimEnd": 227,
-      "smooth": 2
+      "victimEnd": 228,
+      "smooth": 1.5
     }
   },
   "ivone": {
@@ -65,12 +65,12 @@
       ]
     },
     "grab": {
-      "attack": "grab_hit_animation_data.json",
-      "victim": "grab_animation_data.json",
+      "attack": "dando_chute.json",
+      "victim": "recebendo_chute.json",
       "fps": 30,
       "attackEnd": 216,
-      "victimEnd": 227,
-      "smooth": 2
+      "victimEnd": 228,
+      "smooth": 1.5
     }
   }
 }

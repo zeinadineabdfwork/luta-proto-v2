@@ -19,12 +19,18 @@ export const NELTON: FighterData = {
       projectile: { speed: 9, spawn: { x: 62, y: 122 }, w: 46, h: 40, life: 140 },
     },
   },
-  // Agarrão: cena de ~5,5 s (7,2 s do vídeo a 1,3x), sincronizada com as seis batidas detectadas.
+  // Sequência de chutes (cena cinematográfica, a partir do vídeo): 3 chutes; o 2º derruba; a vítima fica deitada e se levanta.
+  // Os frames abaixo são da cena (60/s); o vídeo é 30 fps tocado a 1,25x -> frame da cena = frame do vídeo x 1,6.
   grab: {
-    range: 115, gap: 62, rate: 1.3, frames: 332, cooldown: 300,
+    range: 120, gap: 78, rate: 1.25, frames: 360, cooldown: 300, koFrame: 240,
     hits: [
-      { frame: 15, damage: 25 }, { frame: 43, damage: 35 }, { frame: 66, damage: 45 },
-      { frame: 115, damage: 55 }, { frame: 155, damage: 75, big: true }, { frame: 191, damage: 95, big: true },
+      { frame: 62, damage: 70, y: 108 },                 // chute 1 (vídeo, frame 39)
+      { frame: 125, damage: 110, y: 92, big: true },     // chute 2 (frame 78) - derruba
+      { frame: 176, damage: 130, y: 85, big: true },     // chute 3 (frame 110) - finaliza
+    ],
+    moves: [
+      { who: 'def', from: 147, to: 189, cm: 85 },        // a vítima voa para trás e cai
+      { who: 'att', from: 138, to: 179, cm: 55 },        // o atacante avança atrás dela
     ],
   },
 };

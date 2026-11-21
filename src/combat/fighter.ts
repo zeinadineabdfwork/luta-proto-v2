@@ -20,7 +20,8 @@ export class Fighter {
   hasHit = false;
   grabRequested = false;  // pediu agarrão; a Match decide se conecta
   grabCd = 0;
-  grabRate = 1;           // velocidade dos clips do agarrão em curso
+  grabRate = 1;           // velocidade dos clips da cena em curso
+  koHoldTime: number | null = null;   // se KO vindo da cena: tempo (s) do clip em que fica deitado
   fireballOut = false;   // a Match avisa se já há um projétil dele em cena (só um por vez)
   pendingProjectile = false;
   private prevPunch = false;
@@ -39,7 +40,7 @@ export class Fighter {
     this.facing = this.startFacing; this.health = this.data.maxHealth;
     this.state = 'idle'; this.move = null; this.walkDir = 0; this.frame = 0; this.hitstunTotal = 0;
     this.hasHit = false; this.prevPunch = false; this.prevKick = false; this.prevSpecial = false; this.prevGrab = false;
-    this.grabRequested = false; this.grabCd = 0; this.grabRate = 1;
+    this.grabRequested = false; this.grabCd = 0; this.grabRate = 1; this.koHoldTime = null;
     this.fireballOut = false; this.pendingProjectile = false;
   }
 
@@ -145,10 +146,11 @@ export class Fighter {
     this.setState(role);
   }
   endGrab(): void { this.setState('idle'); }
-  /** Vítima solta: cai (KO) ou se afasta em hitstun. */
-  releaseVictim(dir: 1 | -1): void {
-    if (this.health <= 0) { this.kb = dir * 6; this.hitstunTotal = 0; this.setState('ko'); return; }
-    this.kb = dir * 3.5; this.hitstunTotal = 22; this.setState('hitstun');
+  /** Vítima solta: de pé de novo (se levantou na cena) ou KO deitada (a pose fica congelada em `holdTime`). */
+  releaseVictim(dir: 1 | -1, holdTime: number): void {
+    this.kb = 0;
+    if (this.health <= 0) { this.koHoldTime = holdTime; this.hitstunTotal = 0; this.setState('ko'); return; }
+    this.setState('idle');
   }
 
   takeHit(a: AttackData, attackerFacing: 1 | -1): void {

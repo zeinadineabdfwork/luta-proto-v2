@@ -85,6 +85,7 @@ export class CharacterView {
         return { clip: 'hit', t: lerp(a, b, Math.min(1, f.frame / Math.max(1, f.hitstunTotal * 0.6))), fade: 0.04 };
       }
       case 'ko': {
+        if (f.koHoldTime !== null) return { clip: 'grabVictim', t: f.koHoldTime, fade: 0.05 };   // KO da cena: fica deitado, como no vídeo
         // Não há clip de morte nos arquivos: reação ao golpe e, caindo, o corpo se estica (pose de guarda) enquanto tomba.
         const [, b] = HIT_WINDOW[this.data.id] ?? [0, 0.5];
         if (f.frame < 7) return { clip: 'hit', t: lerp(0, b, f.frame / 7), fade: 0.04 };
@@ -134,7 +135,7 @@ export class CharacterView {
     this.yawNow = this.yawNow === null ? targetYaw : this.yawNow + (targetYaw - this.yawNow) * Math.min(1, dt * 14);
     this.yaw.rotation.y = this.yawNow;
 
-    if (f.state === 'ko') {
+    if (f.state === 'ko' && f.koHoldTime === null) {
       const k = Math.min(1, f.frame / KO_FRAMES);
       const bounce = f.frame > KO_FRAMES ? 0.13 * Math.sin(Math.min(1, (f.frame - KO_FRAMES) / 12) * Math.PI) : 0;
       const ang = (Math.PI / 2) * k * k - bounce;        // cai acelerando, como um corpo de verdade, e quica de leve

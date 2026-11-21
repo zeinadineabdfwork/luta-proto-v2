@@ -24,14 +24,16 @@ export interface AttackData {
   projectile?: ProjectileData; // se existir, o golpe não tem hitbox corpo a corpo: o dano vem do projétil
 }
 
-/** Agarrão cinematográfico: o atacante e a vítima tocam clips sincronizados (gerados do vídeo). */
+/** Cena cinematográfica (ex.: sequência de chutes): atacante e vítima tocam clips sincronizados, vindos de vídeo. */
 export interface GrabData {
-  range: number;          // alcance (cm, centro a centro) para o agarrão conectar
-  gap: number;            // distância entre os dois durante a cena (cm)
-  rate: number;           // velocidade de reprodução dos clips (1 = tempo original)
+  range: number;          // alcance (cm, centro a centro) para a cena conectar
+  gap: number;            // distância inicial entre os dois (cm)
+  rate: number;           // velocidade de reprodução dos clips (1 = tempo original do vídeo)
   frames: number;         // duração da cena em frames lógicos (60/s)
-  hits: { frame: number; damage: number; big?: boolean }[];  // quando cada golpe do agarrão acerta (frame da cena)
-  cooldown: number;       // frames até poder agarrar de novo
+  hits: { frame: number; damage: number; y: number; big?: boolean }[];  // acertos: frame da cena, dano e altura do impacto (cm)
+  moves: { who: 'att' | 'def'; from: number; to: number; cm: number }[]; // deslocamentos (cm, ao longo do eixo atacante→vítima)
+  koFrame: number;        // se a vítima morre, a cena termina aqui, com ela deitada
+  cooldown: number;       // frames até poder usar de novo
 }
 
 export interface FighterData {

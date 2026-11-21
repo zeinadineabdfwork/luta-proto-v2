@@ -169,16 +169,27 @@ export class Match {
   private stepGrab(): void {
     const gs = this.grab!; const { att, def, data } = gs;
     gs.frame++; att.frame = gs.frame; def.frame = gs.frame;
+    // deslocamentos suaves (ex.: vítima desliza ao cair, atacante avança)
+    for (const mv of data.moves) {
+      if (gs.frame <= mv.from || gs.frame > mv.to + 1) continue;
+      const k0 = Math.min(1, Math.max(0, (gs.frame - 1 - mv.from) / (mv.to - mv.from))), k1 = Math.min(1, (gs.frame - mv.from) / (mv.to - mv.from));
+      const ease = (k: number) => k * k * (3 - 2 * k);
+      const who = mv.who === 'att' ? att : def;
+      who.x += att.facing * mv.cm * (ease(k1) - ease(k0));
+    }
+    const left = Math.max(-STAGE_HALF + SCREEN_MARGIN, this.camX - VIEW_W / 2 + SCREEN_MARGIN), right = Math.min(STAGE_HALF - SCREEN_MARGIN, this.camX + VIEW_W / 2 - SCREEN_MARGIN);
+    for (const f of [att, def]) f.x = Math.max(left, Math.min(right, f.x));
     while (gs.done < data.hits.length && gs.frame >= data.hits[gs.done].frame) {
       const h = data.hits[gs.done++];
       def.health = Math.max(0, def.health - h.damage);
-      this.hitstop = h.big ? 8 : 3; this.shake = h.big ? 12 : 6;
-      this.sparks.push({ x: (att.x + def.x) / 2, y: 105 + (gs.done % 3) * 12, age: 0, big: !!h.big });
-      this.log(`agarrão: -${h.damage} (vida ${def.health})`);
+      this.hitstop = h.big ? 8 : 4; this.shake = h.big ? 12 : 7;
+      this.sparks.push({ x: (att.x + def.x) / 2 + att.facing * 6, y: h.y, age: 0, big: !!h.big });
+      this.log(`cena: -${h.damage} (vida ${def.health})`);
     }
-    if (gs.frame >= gs.total) {
-      att.endGrab(); att.grabCd = data.cooldown; def.releaseVictim(att.facing); this.grab = null;
-      if (def.health <= 0) this.shake = 14;
+    const dead = def.health <= 0 && gs.done >= data.hits.length;   // só morre depois do último golpe
+    if (gs.frame >= (dead ? data.koFrame : gs.total)) {
+      att.endGrab(); att.grabCd = data.cooldown;
+      def.releaseVictim(att.facing, (data.koFrame / 60) * data.rate); this.grab = null;
       this.finishIfOver();
     }
   }

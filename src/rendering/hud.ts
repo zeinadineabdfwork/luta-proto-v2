@@ -100,7 +100,7 @@ export class Hud {
     // ajuda de controles (some depois de alguns segundos)
     if (this.helpAge < 12 || debug) {
       c.globalAlpha = debug ? 1 : Math.min(1, (12 - this.helpAge) / 2);
-      this.text('P1: A/D andar · W pular · J soco · K chute · L fogo · H agarrar', 24, HUD_H - 40, 18, '#fff', 'left', '#000', 4);
+      this.text('P1: A/D andar · W pular · J soco · K chute · L fogo · H chutes', 24, HUD_H - 40, 18, '#fff', 'left', '#000', 4);
       this.text('P2: ←/→ andar · ↑ pular · 1(num) ou / soco · 2(num) ou . chute', 24, HUD_H - 14, 18, '#fff', 'left', '#000', 4);
       c.globalAlpha = 1;
     }
